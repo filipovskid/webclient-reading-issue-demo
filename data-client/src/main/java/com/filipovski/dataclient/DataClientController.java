@@ -8,8 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.logging.Logger;
 
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Flux;
 
 @RestController
 public class DataClientController {
@@ -32,19 +31,31 @@ public class DataClientController {
         .uri(uriBuilder -> uriBuilder.path("/data").build())
         .retrieve()
         .bodyToFlux(Object.class)
-        .publishOn(Schedulers.boundedElastic())
         .collectList()
         .block();
   }
 
   /**
-   * Working data loading.
+   * Non-working data loading.
    */
-  @GetMapping("/get-data-object")
-  public Mono<Object> getDataObject() {
+  @GetMapping("/get-data-objects-flux")
+  public Flux<Object> getDataObjectsFlux() {
+    log.info(Thread.currentThread().getName());
     return webClient.get()
         .uri(uriBuilder -> uriBuilder.path("/data").build())
         .retrieve()
-        .bodyToMono(Object.class);
+        .bodyToFlux(Object.class);
+  }
+
+  /**
+   * Working data loading. Make sure that this endpoint does not get invoked first.
+   */
+  @GetMapping("/get-data-object")
+  public Object getDataObject() {
+    return webClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/data").build())
+        .retrieve()
+        .bodyToMono(Object.class)
+        .block();
   }
 }
